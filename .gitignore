@@ -27,3 +27,8 @@ src/mlproject/data/processed/
 
 # ignoring hthe ipynb of EDA
 notebooks/EDA.ipynb
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.env/
