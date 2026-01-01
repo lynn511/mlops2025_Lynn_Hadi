@@ -5,7 +5,15 @@ description = "NYC Taxi Trip Duration - End-to-End MLOps Project"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastparquet>=2025.12.0",
+    "h3>=4.4.1",
+    "ipykernel>=7.1.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
     "pandas>=2.3.3",
+    "pyarrow>=22.0.0",
+    "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
 ]
 
 [build-system]
