@@ -27,3 +27,5 @@ src/mlproject/data/processed/
 
 # ignoring hthe ipynb of EDA
 notebooks/EDA.ipynb
+
+*.parquet
