@@ -29,3 +29,8 @@ src/mlproject/data/processed/
 notebooks/EDA.ipynb
 
 *.parquet
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.env/
