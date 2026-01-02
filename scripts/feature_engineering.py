@@ -112,7 +112,8 @@ if __name__ == "__main__":
     print("[INFO] Feature engineering + split pipeline completed successfully")
 
 
-'''  --train_input src/mlproject/data/processed/train_clean.csv \
+'''  python scripts/feature_engineering.py \
+  --train_input src/mlproject/data/processed/train_clean.csv \
   --test_input src/mlproject/data/processed/test_clean.csv \
   --train_dir src/mlproject/data/splits/train \
   --eval_dir src/mlproject/data/splits/eval
