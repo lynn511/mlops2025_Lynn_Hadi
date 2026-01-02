@@ -25,7 +25,7 @@ class Preprocess(BasePreprocessor):
             raise ValueError("trip_duration column not found in dataframe")
 
         df = df.copy()
-        df["trip_duration"] = df["trip_duration"] / 60
+        df["trip_duration"] = (df["trip_duration"] / 60).round()
         return df
 
     def remove_duration_outliers(
