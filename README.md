@@ -1,40 +1,51 @@
 # mlops2025_Lynn_Hadi
 
-<details>
-<summary><strong>📁 Project Structure</strong></summary>
+# Section1: Pipeline Execution (Makefile)
 
-Below is the current project layout:
 
-```text
+This project uses a Makefile to orchestrate the ML pipeline.
+
+### Available Commands 
+-make preprocess
+
+-make features
+
+---
+# Project Structure
+
+```
 mlops2025_Lynn_Hadi/
-
-# ── Project metadata
+├── Dockerfile
+├── docker-compose.yml
+├── Makefile
 ├── README.md
 ├── pyproject.toml
+├── uv.lock
 ├── main.py
 
-# ── Configuration & experiments
-├── configs/
-├── notebooks/
-
-# ── Entry points
 ├── scripts/
 │   ├── preprocess.py
 │   ├── feature_engineering.py
 │   ├── train.py
 │   └── batch_inference.py
 
-# ── Core package (src layout)
 ├── src/
-│   └── mlproject/
-│       ├── __init__.py
-│       ├── data/
-│       ├── preprocess/
-│       ├── features/
-│       ├── train/
-│       ├── inference/
-│       ├── pipelines/
-│       └── utils/
+│   ├── mlproject/
+│   │   ├── __init__.py
+│   │   ├── data/
+│   │   ├── preprocess/
+│   │   ├── features/
+│   │   ├── train/
+│   │   ├── inference/
+│   │   ├── pipelines/
+│   │   └── utils/
+│   └── mlproject.egg-info/
 
-# ── Testing
+├── notebooks/        # exploration only (gitignored)
+│   └── EDA.ipynb
+
+├── configs/
 └── tests/
+```
+---
+# Section 2 
