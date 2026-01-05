@@ -15,16 +15,20 @@ from sagemaker.sklearn.estimator import SKLearn
 # ========================
 # 2. AWS Config
 # ========================
-role = os.environ["SAGEMAKER_ROLE_ARN"]
+ROLE = os.environ["SAGEMAKER_ROLE_ARN"]
+REGION = os.environ.get("AWS_REGION", "eu-north-1")
+
+# ⚠️ Explicit bucket — DO NOT use default_bucket()
+BUCKET = "lynn-hadi-taxi-mlops"
+
 session = PipelineSession()
-bucket = "lynn-hadi-taxi-mlops"   # 🔴 DO NOT use default_bucket()
 
 # ========================
 # 3. Preprocessing Step
 # ========================
 processor = SKLearnProcessor(
     framework_version="1.2-1",
-    role=role,
+    role=ROLE,
     instance_type="ml.m5.large",
     instance_count=1,
     sagemaker_session=session,
@@ -35,15 +39,19 @@ preprocess_step = ProcessingStep(
     processor=processor,
     inputs=[
         ProcessingInput(
-            source=f"s3://{bucket}/data/raw/",
-            destination="/opt/ml/processing/input",
-        )
+            source=f"s3://{BUCKET}/data/raw/train.csv",
+            destination="/opt/ml/processing/input/train.csv",
+        ),
+        ProcessingInput(
+            source=f"s3://{BUCKET}/data/raw/test.csv",
+            destination="/opt/ml/processing/input/test.csv",
+        ),
     ],
     outputs=[
         ProcessingOutput(
-            output_name="train",
+            output_name="processed",
             source="/opt/ml/processing/output",
-            destination=f"s3://{bucket}/data/processed/",
+            destination=f"s3://{BUCKET}/data/processed",
         )
     ],
     code="scripts/preprocess.py",
@@ -60,7 +68,7 @@ preprocess_step = ProcessingStep(
 # ========================
 estimator = SKLearn(
     entry_point="scripts/train.py",
-    role=role,
+    role=ROLE,
     instance_type="ml.m5.large",
     framework_version="1.2-1",
     py_version="py3",
@@ -72,7 +80,7 @@ train_step = TrainingStep(
     estimator=estimator,
     inputs={
         "train": sagemaker.inputs.TrainingInput(
-            s3_data=f"s3://{bucket}/data/processed/train.csv",
+            s3_data=f"s3://{BUCKET}/data/processed/train.csv",
             content_type="text/csv",
         )
     },
@@ -86,3 +94,4 @@ pipeline = Pipeline(
     steps=[preprocess_step, train_step],
     sagemaker_session=session,
 )
+
