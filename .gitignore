@@ -37,3 +37,4 @@ __pycache__/
 
 # MLflow
 mlruns/
+**/.ipynb_checkpoints/

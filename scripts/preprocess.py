@@ -1,17 +1,20 @@
 import argparse
-import pandas as pd
-import numpy as np
+import sys
 import os
+import pandas as pd
+
+# Make src visible inside processing container
+sys.path.append("/opt/ml/processing/code/src")
+
+from mlproject.preprocess.preprocessor import Preprocess
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Preprocessing step")
-
-    parser.add_argument("--train_path", type=str, required=True)
-    parser.add_argument("--test_path", type=str, required=True)
-    parser.add_argument("--output_train", type=str, required=True)
-    parser.add_argument("--output_test", type=str, required=True)
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train_path", required=True)
+    parser.add_argument("--test_path", required=True)
+    parser.add_argument("--output_train", required=True)
+    parser.add_argument("--output_test", required=True)
     return parser.parse_args()
 
 
@@ -40,25 +43,24 @@ def preprocess_test(df: pd.DataFrame) -> pd.DataFrame:
 def main():
     args = parse_args()
 
-    print("📥 Loading data")
     train_df = pd.read_csv(args.train_path)
     test_df = pd.read_csv(args.test_path)
 
-    print("🧹 Preprocessing train data")
-    train_df = preprocess_train(train_df)
+    pre = Preprocess()
 
-    print("🧹 Preprocessing test data")
-    test_df = preprocess_test(test_df)
+    train_df = pre.remove_nulls(train_df)
+    train_df = pre.remove_invalid_passengers(train_df)
+    train_df = pre.add_trip_duration_minutes(train_df)
+    train_df = pre.remove_duration_outliers(train_df)
+
+    test_df = pre.remove_nulls(test_df)
+    test_df = pre.remove_invalid_passengers(test_df)
 
     os.makedirs(os.path.dirname(args.output_train), exist_ok=True)
     os.makedirs(os.path.dirname(args.output_test), exist_ok=True)
 
     train_df.to_csv(args.output_train, index=False)
     test_df.to_csv(args.output_test, index=False)
-
-    print("✅ Preprocessing completed")
-    print(f"Train saved to {args.output_train}")
-    print(f"Test saved to {args.output_test}")
 
 
 if __name__ == "__main__":

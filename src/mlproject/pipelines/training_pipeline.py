@@ -1,5 +1,5 @@
 # ========================
-# 1. Imports
+# Imports
 # ========================
 import os
 import sagemaker
@@ -13,18 +13,16 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.sklearn.estimator import SKLearn
 
 # ========================
-# 2. AWS Config
+# AWS Config
 # ========================
 ROLE = os.environ["SAGEMAKER_ROLE_ARN"]
 REGION = os.environ.get("AWS_REGION", "eu-north-1")
-
-# ⚠️ Explicit bucket — DO NOT use default_bucket()
 BUCKET = "lynn-hadi-taxi-mlops"
 
 session = PipelineSession()
 
 # ========================
-# 3. Preprocessing Step
+# Preprocessing Processor
 # ========================
 processor = SKLearnProcessor(
     framework_version="1.2-1",
@@ -34,17 +32,20 @@ processor = SKLearnProcessor(
     sagemaker_session=session,
 )
 
+# ========================
+# Preprocessing Step
+# ========================
 preprocess_step = ProcessingStep(
     name="Preprocess",
     processor=processor,
     inputs=[
         ProcessingInput(
-            source=f"s3://{BUCKET}/data/raw/train.csv",
-            destination="/opt/ml/processing/input/train.csv",
+            source=f"s3://{BUCKET}/data/raw/",
+            destination="/opt/ml/processing/input",
         ),
         ProcessingInput(
-            source=f"s3://{BUCKET}/data/raw/test.csv",
-            destination="/opt/ml/processing/input/test.csv",
+            source="src",
+            destination="/opt/ml/processing/code/src",
         ),
     ],
     outputs=[
@@ -64,16 +65,21 @@ preprocess_step = ProcessingStep(
 )
 
 # ========================
-# 4. Training Step
+# Training Step (Linear only)
 # ========================
 estimator = SKLearn(
     entry_point="scripts/train.py",
+    source_dir=".",
+    dependencies=["src"],
     role=ROLE,
     instance_type="ml.m5.large",
     framework_version="1.2-1",
     py_version="py3",
     sagemaker_session=session,
 )
+
+
+
 
 train_step = TrainingStep(
     name="TrainModel",
@@ -87,7 +93,7 @@ train_step = TrainingStep(
 )
 
 # ========================
-# 5. Pipeline Definition
+# Pipeline Definition
 # ========================
 pipeline = Pipeline(
     name="TaxiTrainingPipeline",
