@@ -1,60 +1,44 @@
 import argparse
 import sys
-from pathlib import Path
+import os
+import pandas as pd
 
-# Add src to path
-sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
+# Make src visible inside processing container
+sys.path.append("/opt/ml/processing/code/src")
 
-from mlproject.utils.dataloader import DataLoader
 from mlproject.preprocess.preprocessor import Preprocess
-from mlproject.utils.datasaver import save_dataframe
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Preprocessing step")
-
-    parser.add_argument("--train_path", type=str, required=True)
-    parser.add_argument("--test_path", type=str, required=True)
-    parser.add_argument("--output_train", type=str, required=True)
-    parser.add_argument("--output_test", type=str, required=True)
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train_path", required=True)
+    parser.add_argument("--test_path", required=True)
+    parser.add_argument("--output_train", required=True)
+    parser.add_argument("--output_test", required=True)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    # ------------------
-    # Load data
-    # ------------------
-    loader = DataLoader(
-        train_path=args.train_path,
-        test_path=args.test_path,
-    )
-    train_df, test_df = loader.load()
+    train_df = pd.read_csv(args.train_path)
+    test_df = pd.read_csv(args.test_path)
 
-    # ------------------
-    # Preprocess
-    # ------------------
-    preprocessor = Preprocess()
+    pre = Preprocess()
 
-    train_df = preprocessor.remove_nulls(train_df)
-    train_df = preprocessor.remove_invalid_passengers(train_df)
-    train_df = preprocessor.add_trip_duration_minutes(train_df)
-    train_df = preprocessor.remove_duration_outliers(train_df)
+    train_df = pre.remove_nulls(train_df)
+    train_df = pre.remove_invalid_passengers(train_df)
+    train_df = pre.add_trip_duration_minutes(train_df)
+    train_df = pre.remove_duration_outliers(train_df)
 
-    test_df = preprocessor.remove_nulls(test_df)
-    test_df = preprocessor.remove_invalid_passengers(test_df)
+    test_df = pre.remove_nulls(test_df)
+    test_df = pre.remove_invalid_passengers(test_df)
 
-    # ------------------
-    # Save outputs
-    # ------------------
-    save_dataframe(train_df, args.output_train)
-    save_dataframe(test_df, args.output_test)
+    os.makedirs(os.path.dirname(args.output_train), exist_ok=True)
+    os.makedirs(os.path.dirname(args.output_test), exist_ok=True)
 
-    print("✅ Preprocessing completed successfully")
-    print(f"📁 Train saved to: {args.output_train}")
-    print(f"📁 Test saved to: {args.output_test}")
+    train_df.to_csv(args.output_train, index=False)
+    test_df.to_csv(args.output_test, index=False)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # ========================
-# 1. Imports
+# Imports
 # ========================
 import os
 import sagemaker
@@ -13,37 +13,46 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.sklearn.estimator import SKLearn
 
 # ========================
-# 2. AWS Config
+# AWS Config
 # ========================
-role = os.environ["SAGEMAKER_ROLE_ARN"]
+ROLE = os.environ["SAGEMAKER_ROLE_ARN"]
+REGION = os.environ.get("AWS_REGION", "eu-north-1")
+BUCKET = "lynn-hadi-taxi-mlops"
+
 session = PipelineSession()
-bucket = "lynn-hadi-taxi-mlops"   # 🔴 DO NOT use default_bucket()
 
 # ========================
-# 3. Preprocessing Step
+# Preprocessing Processor
 # ========================
 processor = SKLearnProcessor(
     framework_version="1.2-1",
-    role=role,
+    role=ROLE,
     instance_type="ml.m5.large",
     instance_count=1,
     sagemaker_session=session,
 )
 
+# ========================
+# Preprocessing Step
+# ========================
 preprocess_step = ProcessingStep(
     name="Preprocess",
     processor=processor,
     inputs=[
         ProcessingInput(
-            source=f"s3://{bucket}/data/raw/",
+            source=f"s3://{BUCKET}/data/raw/",
             destination="/opt/ml/processing/input",
-        )
+        ),
+        ProcessingInput(
+            source="src",
+            destination="/opt/ml/processing/code/src",
+        ),
     ],
     outputs=[
         ProcessingOutput(
-            output_name="train",
+            output_name="processed",
             source="/opt/ml/processing/output",
-            destination=f"s3://{bucket}/data/processed/",
+            destination=f"s3://{BUCKET}/data/processed",
         )
     ],
     code="scripts/preprocess.py",
@@ -56,33 +65,39 @@ preprocess_step = ProcessingStep(
 )
 
 # ========================
-# 4. Training Step
+# Training Step (Linear only)
 # ========================
 estimator = SKLearn(
     entry_point="scripts/train.py",
-    role=role,
+    source_dir=".",
+    dependencies=["src"],
+    role=ROLE,
     instance_type="ml.m5.large",
     framework_version="1.2-1",
     py_version="py3",
     sagemaker_session=session,
 )
 
+
+
+
 train_step = TrainingStep(
     name="TrainModel",
     estimator=estimator,
     inputs={
         "train": sagemaker.inputs.TrainingInput(
-            s3_data=f"s3://{bucket}/data/processed/train.csv",
+            s3_data=f"s3://{BUCKET}/data/processed/train.csv",
             content_type="text/csv",
         )
     },
 )
 
 # ========================
-# 5. Pipeline Definition
+# Pipeline Definition
 # ========================
 pipeline = Pipeline(
     name="TaxiTrainingPipeline",
     steps=[preprocess_step, train_step],
     sagemaker_session=session,
 )
+
