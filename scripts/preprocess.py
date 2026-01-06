@@ -18,6 +18,28 @@ def parse_args():
     return parser.parse_args()
 
 
+def preprocess_train(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.dropna()
+    df = df[df["passenger_count"] > 0]
+
+    # add trip duration in minutes (example)
+    df["trip_duration_minutes"] = df["trip_duration"] / 60.0
+
+    # remove extreme outliers
+    q_low = df["trip_duration_minutes"].quantile(0.01)
+    q_high = df["trip_duration_minutes"].quantile(0.99)
+    df = df[(df["trip_duration_minutes"] >= q_low) &
+            (df["trip_duration_minutes"] <= q_high)]
+
+    return df
+
+
+def preprocess_test(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.dropna()
+    df = df[df["passenger_count"] > 0]
+    return df
+
+
 def main():
     args = parse_args()
 
