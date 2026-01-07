@@ -1,9 +1,10 @@
 # mlops2025_Lynn_Hadi
 
 ## Overview
-End-to-end MLOps pipeline for taxi trip duration prediction, covering
-data preprocessing, feature engineering, model training, evaluation,
-and experiment tracking.
+End-to-end MLOps project for taxi trip duration prediction using the New York City Taxi dataset.
+The project implements a complete machine learning pipeline covering preprocessing, feature engineering, training, evaluation, batch inference, and cloud execution, following the tools and practices covered in the MLOps course.
+
+Task: Regression – predict trip_duration.
 
 ---
 ## Project Structure
@@ -17,6 +18,19 @@ mlops2025_Lynn_Hadi/
 ├── pyproject.toml
 ├── uv.lock
 ├── main.py
+├── mlflow.db
+├── mlruns
+├── pyproject.toml
+├── run_batch_inference_pipeline.py
+├── run_training_pipeline.py
+
+├── models
+│   ├── trained_model.dv.pkl
+│   ├── trained_model.metrics.json
+│   └── trained_model.pkl
+
+── outputs
+│   └── 20260104_predictions.csv
 
 ├── scripts/
 │   ├── preprocess.py
@@ -39,6 +53,8 @@ mlops2025_Lynn_Hadi/
 ├── configs/
 └── tests/
 ```
+The project follows a src/ layout, with each pipeline stage implemented as a separate module and script.
+
 ---
 ## Setup Instructions
 ### Clone the repository
@@ -64,10 +80,8 @@ MLflow runs locally by default
 ---
 ## Pipeline Execution (Makefile)
 
-
-This project uses a Makefile to orchestrate the ML pipeline.
-### The pipeline 
-
+The ML pipeline is orchestrated locally using a Makefile.
+### Pipeline Overview
 ```mermaid
 flowchart LR
     A[Raw CSVs] --> B[Preprocessing]
@@ -120,18 +134,32 @@ Runs the complete pipeline with MLflow experiment tracking enabled.
 make clean
 ```
 Removes all generated artifacts, models, and intermediate data.
-### Notes: 
-The best performing model is the XGBoost, we chose it as the default model.
-if you want to experiment with the linear Regression model:
+
+---
+## Model Selection and Metrics
+Two models were implemented and compared:
+
+- Linear Regression
+
+- XGBoost Regressor
+
+### Evaluation metrics:RMSE, MAE,R²
+
+Metric choice:
+RMSE is used as the primary metric because it penalizes large errors more heavily, which is important for trip duration prediction.
+
+### Model choice:
+XGBoost consistently outperformed Linear Regression across all metrics and was selected as the default model.
+
+To experiment with Linear Regression:
 ```bash
 make train MODEL_TYPE=linear
 ```
 Prediction unit is in minutes.
 
 ---
-
 ## Experiment Tracking (MLflow)
-This project uses MLflow to track and compare machine learning experiments in a reproducible way.
+MLflow is used to track experiments during local training.
 
 ```md
 What is tracked:
@@ -140,13 +168,7 @@ What is tracked:
 - Metrics: RMSE, MAE, R²
 
 ```
-How it works
-
-MLflow is integrated directly into the training script (train.py).
-Each model run is logged as a separate MLflow run under the same experiment.
-MLflow enables reproducibility, model comparison, and experiment auditing
-without modifying the core training logic.
-
+MLflow is integrated directly in train.py.
 
 ## Launch MLflow UI
 ```bash
@@ -160,8 +182,117 @@ http://127.0.0.1:5000
 ## Results
 
 MLflow enables easy comparison between models.
+
 In this project, XGBoost outperforms Linear Regression across all evaluation metrics.
 
 ![MLflow experiment comparison](https://github.com/user-attachments/assets/9e78e3c7-e28c-4b54-b526-381e79318b28)
 
+---
+## Docker Execution (Mandatory)
 
+### Dockerfile
+
+-Uses Python 3.11
+
+-Installs dependencies using uv
+
+-Installs the mlproject package
+
+-Supports training and inference execution
+### Docker Compose
+docker-compose.yml orchestrates the application and optional MLflow service.
+example usage:
+``` bash 
+docker-compose run app train
+docker-compose run app inference
+```
+The same pipeline logic works locally and inside docker containers
+
+<img width="1421" height="797" alt="Screenshot 2026-01-06 at 9 26 13 PM" src="https://github.com/user-attachments/assets/4e7b4cfb-8cd0-4da6-9a1e-072292e55ffc" />
+
+---
+## AWS SageMaker Pipeline (Studio + S3)
+This project implements AWS SageMaker pipelines for cloud execution, developed and executed using SageMaker Studio.
+
+### Pipelines implemented:
+
+#### Training pipeline:
+
+Preprocessing
+
+Feature engineering
+
+Model training
+
+Model artifact output to S3
+
+#### Batch inference pipeline:
+
+Takes raw CSV input
+
+Runs preprocessing and feature engineering
+
+Loads the trained model
+
+Runs batch inference
+
+Writes predictions to S3
+
+### S3 Usage
+
+Amazon S3 is used to store:
+
+-Input datasets
+
+-Intermediate processed data
+
+-Model artifacts
+
+-Batch inference outputs
+
+All pipeline steps exchange data through S3.
+
+<img width="670" height="440" alt="image" src="https://github.com/user-attachments/assets/ba5cbbe5-6d56-40fc-ab1e-583e7fe557df" />
+
+### Code location
+``` bash 
+src/mlproject/pipelines/
+```
+The same codebase is reused across local, Docker, and SageMaker executions.
+
+---
+
+``` mermaid
+flowchart LR
+    A[Local Execution] --> B[Makefile]
+    B --> C[Docker Containers]
+    B --> D[MLflow]
+
+    E[AWS SageMaker Studio] --> F[SageMaker Pipelines]
+    F --> G[S3 Buckets]
+
+```
+
+Docker was used only for local execution.
+SageMaker pipelines run natively on AWS infrastructure without Docker-based execution.
+
+---
+
+# Team Contributions:
+A significant portion of the development was done collaboratively during live meetups.
+
+### Lynn el Moussaoui:
+- Initial project structure and packaging (`src/` layout)
+- Data splitting logic and leakage prevention
+- Docker setup and image configuration
+- Makefile pipeline orchestration
+- MLflow integration for experiment tracking
+- AWS SageMaker pipeline definition and execution
+
+### Hadi Cheayto:
+- Feature engineering implementation (time-based and distance-based features)
+- Model training and evaluation for Linear Regression and XGBoost
+- Batch inference implementation and prediction output handling
+- Docker Compose configuration for local pipeline execution
+- Contribution to AWS SageMaker pipeline components
+- Refactoring final code logic
