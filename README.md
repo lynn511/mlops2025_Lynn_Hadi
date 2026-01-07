@@ -260,6 +260,8 @@ src/mlproject/pipelines/
 ```
 The same codebase is reused across local, Docker, and SageMaker executions.
 
+![WhatsApp Image 2026-01-07 at 10 31 18 PM](https://github.com/user-attachments/assets/578d75d9-1d3c-41d1-b65c-7f1cc44b5f1c)
+
 ---
 
 ``` mermaid
